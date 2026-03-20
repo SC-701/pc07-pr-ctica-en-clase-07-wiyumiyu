@@ -1,0 +1,103 @@
+﻿@page
+@model Web.Pages.Productos.EditarModel
+@{
+}
+
+<header class="subhead">
+    <div class="container">
+        <div class="masthead-subheading">SC-701</div>
+        <div class="masthead-heading text-uppercase">Editar Producto</div>
+    </div>
+</header>
+
+<section class="page-section bg-light">
+    <div class="container">
+
+        <div class="text-center">
+            <h2>Editar Producto</h2>
+        </div>
+
+        <div class="col-md-6 mx-auto">
+            <form method="post">
+
+                <!-- CATEGORIA -->
+                <div class="form-group">
+                    <label>Categoría</label>
+                    <select asp-for="categoriaSeleccionada"
+                            asp-items="Model.categorias"
+                            class="form-select"
+                            id="categorias"
+                            onchange="fetchSubCategorias()">
+                        <option value="">Seleccione</option>
+                    </select>
+                </div>
+
+                <!-- SUBCATEGORIA -->
+                <div class="form-group">
+                    <label>SubCategoría</label>
+                    <select asp-for="subCategoriaSeleccionada"
+                            asp-items="Model.subcategorias"
+                            class="form-select"
+                            id="subcategorias">
+                        <option value="">Seleccione</option>
+                    </select>
+                </div>
+
+                <!-- CAMPOS -->
+                <div class="form-group">
+                    <label asp-for="producto.Nombre"></label>
+                    <input asp-for="producto.Nombre" class="form-control" />
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="producto.Descripcion"></label>
+                    <input asp-for="producto.Descripcion" class="form-control" />
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="producto.Precio"></label>
+                    <input asp-for="producto.Precio" class="form-control" />
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="producto.Stock"></label>
+                    <input asp-for="producto.Stock" class="form-control" />
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="producto.CodigoBarras"></label>
+                    <input asp-for="producto.CodigoBarras" class="form-control" />
+                </div>
+
+                <input type="hidden" asp-for="producto.Id" />
+
+                <div class="mt-3">
+                    <a class="btn btn-primary" asp-page="./Index">Regresar</a>
+                    <button type="submit" class="btn btn-warning">Editar</button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        async function fetchSubCategorias() {
+            const id = document.getElementById('categorias').value;
+
+            const res = await fetch(`?handler=ObtenerSubCategorias&idCategoria=${id}`);
+            const data = await res.json();
+
+            const select = document.getElementById('subcategorias');
+            select.innerHTML = "";
+
+            data.forEach(s => {
+                const opt = document.createElement("option");
+                opt.value = s.id;
+                opt.text = s.nombre;
+                select.appendChild(opt);
+            });
+        }
+    </script>
+}

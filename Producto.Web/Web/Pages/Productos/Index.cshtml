@@ -1,0 +1,88 @@
+﻿@page
+@model Web.Pages.Productos.IndexModel
+@{
+}
+
+<header class="subhead">
+    <div class="container">
+        <div class="masthead-subheading">SC-701</div>
+        <div class="masthead-heading text-uppercase">Listado de Productos</div>
+    </div>
+</header>
+
+<section class="page-section bg-light">
+    <div class="container">
+
+        <div class="text-center">
+            <h2>Listado de Productos</h2>
+        </div>
+
+        <div class="text-center mb-4">
+            <a class="btn btn-success btn-lg" asp-page="./Agregar">
+                <i class="bi bi-plus-square"></i> Agregar
+            </a>
+        </div>
+
+        <div class="row">
+
+            @if (Model.productos != null && Model.productos.Any())
+            {
+                @foreach (var producto in Model.productos)
+                {
+                    <div class="col-md-4 mb-4">
+                        <div class="card shadow-sm">
+
+                            <div class="card-body">
+
+                                <!-- TITULO -->
+                                <h5 class="card-title">
+                                    @producto.Nombre
+                                </h5>
+
+                                <!-- CATEGORIA -->
+                                <h6 class="card-subtitle text-muted mb-2">
+                                    @producto.Categoria / @producto.SubCategoria
+                                </h6>
+
+                                <!-- DESCRIPCION -->
+                                <p class="card-text">
+                                    @producto.Descripcion
+                                </p>
+
+                                <!-- PRECIO -->
+                                <p><b>Precio:</b> ₡ @producto.Precio</p>
+
+                                <!-- BOTONES -->
+                                <a class="btn btn-primary"
+                                   asp-page="./Detalle"
+                                   asp-route-id="@producto.Id">
+                                    Detalle
+                                </a>
+
+                                <a class="btn btn-warning"
+                                   asp-page="./Editar"
+                                   asp-route-id="@producto.Id">
+                                    Editar
+                                </a>
+
+                                <a class="btn btn-danger"
+                                   asp-page="./Eliminar"
+                                   asp-route-id="@producto.Id">
+                                    Eliminar
+                                </a>
+
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="alert alert-warning">
+                    No hay productos disponibles.
+                </div>
+            }
+
+        </div>
+    </div>
+</section>

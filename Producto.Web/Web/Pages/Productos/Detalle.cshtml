@@ -1,0 +1,81 @@
+﻿@page
+@model Web.Pages.Productos.DetalleModel
+@{
+}
+
+<header class="subhead">
+    <div class="container">
+        <div class="masthead-subheading">SC-701: Programación Web Avanzada</div>
+        <div class="masthead-heading text-uppercase">Detalle Producto</div>
+    </div>
+</header>
+
+<section class="page-section" id="services">
+    <div class="container" style="max-width: fit-content;">
+        <div class="text-center">
+            <h2 class="section-heading text-uppercase">Detalle del Producto</h2>
+            <h3 class="section-subheading text-muted">Información completa</h3>
+        </div>
+
+        <div class="card mb-3 w-100 shadow-sm">
+            <div class="row g-0">
+
+                <!-- IMAGEN -->
+                <div class="col-md-4">
+                    <img src="~/assets/img/product.png"
+                         class="img-fluid p-4 rounded-start"
+                         alt="producto">
+                </div>
+
+                <!-- INFO -->
+                <div class="col-md-8">
+                    <div class="card-body">
+
+                        <!-- TITULO -->
+                        <h5 class="card-title">
+                            @Model.producto.Nombre
+                        </h5>
+
+                        <!-- CATEGORIA -->
+                        <p>
+                            <b>Categoría:</b> @Model.producto.Categoria <br />
+                            <b>SubCategoría:</b> @Model.producto.SubCategoria
+                        </p>
+
+                        <!-- DETALLES -->
+                        <p class="card-text">
+
+                            <div>
+                                <b>Descripción:</b>
+                                @Model.producto.Descripcion
+                            </div>
+
+                            <div>
+                                <b>Precio:</b>
+                                ₡ @Model.producto.Precio
+                            </div>
+
+                            <div>
+                                <b>Stock:</b>
+                                @Model.producto.Stock
+                            </div>
+
+                            <div>
+                                <b>Código:</b>
+                                @Model.producto.CodigoBarras
+                            </div>
+
+                        </p>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- BOTONES -->
+        <a class="btn btn-primary" asp-page="./Index">Regresar</a>
+        <a class="btn btn-warning" asp-page="./Editar" asp-route-id="@Model.producto.Id">Editar</a>
+
+    </div>
+</section>
