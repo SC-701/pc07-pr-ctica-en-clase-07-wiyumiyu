@@ -22,13 +22,11 @@ namespace Web.Pages.Productos
         {
             if (id == null)
                 return;
-
             string endpoint = _configuracion.ObtenerMetodo("ApiEndPoints", "ObtenerProducto");
-
             var cliente = new HttpClient();
 
-            var respuesta = await cliente.GetAsync(string.Format(endpoint, id));
-
+            var solicitud = new HttpRequestMessage(HttpMethod.Get, string.Format(endpoint, id));
+            var respuesta = await cliente.SendAsync(solicitud);
             respuesta.EnsureSuccessStatusCode();
 
             if (respuesta.StatusCode == HttpStatusCode.OK)

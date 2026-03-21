@@ -4,6 +4,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Net;
 using System.Text.Json;
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using System.Net;
+using System.Text.Json;
 
 namespace Web.Pages.Productos
 {
@@ -11,7 +14,7 @@ namespace Web.Pages.Productos
     {
         private IConfiguracion _configuracion;
 
-        public IList<ProductoResponse> productos { get; set; } = new List<ProductoResponse>();
+        public IList<ProductoResponse> productos { get; set; } = default!;
 
         public IndexModel(IConfiguracion configuracion)
         {
@@ -20,23 +23,20 @@ namespace Web.Pages.Productos
 
         public async Task OnGet()
         {
-            // 🔥 evitar cache
-            Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
-            Response.Headers["Pragma"] = "no-cache";
-            Response.Headers["Expires"] = "0";
-
             string endpoint = _configuracion.ObtenerMetodo("ApiEndPoints", "ObtenerProductos");
 
             var cliente = new HttpClient();
-            var respuesta = await cliente.GetAsync(endpoint);
+            var solicitud = new HttpRequestMessage(HttpMethod.Get, endpoint);
 
+
+            var respuesta = await cliente.SendAsync(solicitud);
             respuesta.EnsureSuccessStatusCode();
-
-            var resultado = await respuesta.Content.ReadAsStringAsync();
-
-            // 
-            productos = JsonSerializer.Deserialize<List<ProductoResponse>>(resultado,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            if (respuesta.StatusCode == HttpStatusCode.OK)
+            {
+                var resultado = await respuesta.Content.ReadAsStringAsync();
+                var opciones = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                productos = JsonSerializer.Deserialize<List<ProductoResponse>>(resultado, opciones);
+            }
         }
     }
 }

@@ -40,7 +40,6 @@
                     <label>SubCategoría</label>
                     <select asp-for="producto.IdSubCategoria"
                             class="form-select"
-                            asp-items="Model.subcategorias"
                             id="subcategorias">
                         <option value="">Seleccione una subcategoría</option>
                     </select>
@@ -119,8 +118,8 @@
 
                 data.forEach(s => {
                     const option = document.createElement('option');
-                    option.value = s.id;
-                    option.text = s.nombre;
+                            option.value = s.id || s.Id;
+        option.text = s.nombre || s.Nombre;
                     select.appendChild(option);
                 });
 

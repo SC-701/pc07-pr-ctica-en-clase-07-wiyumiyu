@@ -6,7 +6,7 @@
 <header class="subhead">
     <div class="container">
         <div class="masthead-subheading">SC-701: Programación Web Avanzada</div>
-        <div class="masthead-heading text-uppercase">Detalle Producto</div>
+        <div class="masthead-heading text-uppercase">Detalle de Producto</div>
     </div>
 </header>
 
@@ -14,55 +14,61 @@
     <div class="container" style="max-width: fit-content;">
         <div class="text-center">
             <h2 class="section-heading text-uppercase">Detalle del Producto</h2>
-            <h3 class="section-subheading text-muted">Información completa</h3>
+            <h3 class="section-subheading text-muted">Información completa del producto</h3>
         </div>
 
         <div class="card mb-3 w-100 shadow-sm">
             <div class="row g-0">
 
                 <!-- IMAGEN -->
-                <div class="col-md-4">
-                    <img src="~/assets/img/product.png"
-                         class="img-fluid p-4 rounded-start"
-                         alt="producto">
+                <div class="col-md-4" style="min-width: fit-content;">
+                    <img src="~/assets/img/product.png" class="img-fluid vw-3 p-4 rounded-start" alt="producto">
                 </div>
 
-                <!-- INFO -->
                 <div class="col-md-8">
                     <div class="card-body">
 
-                        <!-- TITULO -->
+                        <!-- NOMBRE -->
                         <h5 class="card-title">
-                            @Model.producto.Nombre
+                            @Html.DisplayFor(modelo => modelo.producto.Nombre)
                         </h5>
 
-                        <!-- CATEGORIA -->
-                        <p>
-                            <b>Categoría:</b> @Model.producto.Categoria <br />
-                            <b>SubCategoría:</b> @Model.producto.SubCategoria
-                        </p>
-
-                        <!-- DETALLES -->
                         <p class="card-text">
 
+                            <!-- DESCRIPCION -->
                             <div>
-                                <b>Descripción:</b>
-                                @Model.producto.Descripcion
+                                <b>@Html.DisplayNameFor(modelo => modelo.producto.Descripcion): </b>
+                                @Html.DisplayFor(modelo => modelo.producto.Descripcion)
                             </div>
 
+                            <!-- PRECIO -->
                             <div>
-                                <b>Precio:</b>
-                                ₡ @Model.producto.Precio
+                                <b>@Html.DisplayNameFor(modelo => modelo.producto.Precio): </b>
+                                @Html.DisplayFor(modelo => modelo.producto.Precio)
                             </div>
 
+                            <!-- STOCK -->
                             <div>
-                                <b>Stock:</b>
-                                @Model.producto.Stock
+                                <b>@Html.DisplayNameFor(modelo => modelo.producto.Stock): </b>
+                                @Html.DisplayFor(modelo => modelo.producto.Stock)
                             </div>
 
+                            <!-- CODIGO -->
                             <div>
-                                <b>Código:</b>
-                                @Model.producto.CodigoBarras
+                                <b>@Html.DisplayNameFor(modelo => modelo.producto.CodigoBarras): </b>
+                                @Html.DisplayFor(modelo => modelo.producto.CodigoBarras)
+                            </div>
+
+                            <!-- CATEGORIA -->
+                            <div>
+                                <b>Categoría:</b>
+                                @Html.DisplayFor(modelo => modelo.producto.Categoria)
+                            </div>
+
+                            <!-- SUBCATEGORIA -->
+                            <div>
+                                <b>Subcategoría:</b>
+                                @Html.DisplayFor(modelo => modelo.producto.SubCategoria)
                             </div>
 
                         </p>
@@ -70,12 +76,8 @@
                     </div>
                 </div>
 
-            </div>
-        </div>
-
         <!-- BOTONES -->
         <a class="btn btn-primary" asp-page="./Index">Regresar</a>
         <a class="btn btn-warning" asp-page="./Editar" asp-route-id="@Model.producto.Id">Editar</a>
-
     </div>
 </section>

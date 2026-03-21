@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Net;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace Web.Pages.Productos
 {
@@ -16,17 +17,11 @@ namespace Web.Pages.Productos
         public ProductoRequest producto { get; set; } = default!;
 
         [BindProperty]
-        public List<SelectListItem> categorias { get; set; } = new();
+        public List<SelectListItem> categorias { get; set; } = default!;
 
         [BindProperty]
-        public List<SelectListItem> subcategorias { get; set; } = new();
-
-        [BindProperty]
-        public Guid categoriaSeleccionada { get; set; }
-
-      
-        [BindProperty]
-        public Guid subCategoriaSeleccionada { get; set; }
+        public List<SelectListItem> subcategorias { get; set; } = default!;
+        public Guid categoriaSeleccionada { get; set; } = default!;
 
         public AgregarModel(IConfiguracion configuracion)
         {
@@ -41,25 +36,15 @@ namespace Web.Pages.Productos
         }
 
         // POST
-        public async Task<IActionResult> OnPost()
+        public async Task<ActionResult> OnPost()
         {
             if (!ModelState.IsValid)
-            {
-                await ObtenerCategoriasAsync();
                 return Page();
-            }
-
-            // 🔥 CLAVE: asignar subcategoria
-            producto.IdSubCategoria = subCategoriaSeleccionada;
-
             string endpoint = _configuracion.ObtenerMetodo("ApiEndPoints", "AgregarProducto");
-
             var cliente = new HttpClient();
 
             var respuesta = await cliente.PostAsJsonAsync(endpoint, producto);
-
             respuesta.EnsureSuccessStatusCode();
-
             return RedirectToPage("./Index");
         }
 
@@ -69,8 +54,8 @@ namespace Web.Pages.Productos
             string endpoint = _configuracion.ObtenerMetodo("ApiEndPoints", "ObtenerCategorias");
 
             var cliente = new HttpClient();
-            var respuesta = await cliente.GetAsync(endpoint);
-
+            var solicitud = new HttpRequestMessage(HttpMethod.Get, endpoint);
+            var respuesta = await cliente.SendAsync(solicitud);
             respuesta.EnsureSuccessStatusCode();
 
             if (respuesta.StatusCode == HttpStatusCode.OK)
@@ -78,23 +63,22 @@ namespace Web.Pages.Productos
                 var resultado = await respuesta.Content.ReadAsStringAsync();
 
                 var opciones = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-
-                var lista = JsonSerializer.Deserialize<List<Categoria>>(resultado, opciones);
-
-                categorias = lista.Select(c => new SelectListItem
-                {
-                    Value = c.Id.ToString(),
-                    Text = c.Nombre
-                }).ToList();
+                var resultadoDeserializado = JsonSerializer.Deserialize<List<Categoria>>(resultado, opciones);
+                categorias = resultadoDeserializado.Select(a =>
+                                  new SelectListItem
+                                  {
+                                      Value = a.Id.ToString(),
+                                      Text = a.Nombre.ToString()
+                                  }).ToList();
             }
         }
 
         // AJAX handler
         public async Task<JsonResult> OnGetObtenerSubCategorias(Guid idCategoria)
         {
-            var lista = await ObtenerSubCategoriasAsync(idCategoria);
-            return new JsonResult(lista);
-        }
+                var subCategorias = await ObtenerSubCategoriasAsync(idCategoria);
+                return new JsonResult(subCategorias);
+            }
 
         // SUBCATEGORIAS
         private async Task<List<SubCategoria>> ObtenerSubCategoriasAsync(Guid idCategoria)
@@ -102,9 +86,9 @@ namespace Web.Pages.Productos
             string endpoint = _configuracion.ObtenerMetodo("ApiEndPoints", "ObtenerSubCategorias");
 
             var cliente = new HttpClient();
+            var solicitud = new HttpRequestMessage(HttpMethod.Get, string.Format(endpoint, idCategoria));
 
-            var respuesta = await cliente.GetAsync(string.Format(endpoint, idCategoria));
-
+            var respuesta = await cliente.SendAsync(solicitud);
             respuesta.EnsureSuccessStatusCode();
 
             if (respuesta.StatusCode == HttpStatusCode.OK)

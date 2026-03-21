@@ -4,7 +4,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Net;
+using System.Reflection;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace Web.Pages.Productos
 {
@@ -19,7 +21,7 @@ namespace Web.Pages.Productos
         public List<SelectListItem> categorias { get; set; } = new();
 
         [BindProperty]
-        public List<SelectListItem> subcategorias { get; set; } = new();
+        public List<SelectListItem> subCategorias { get; set; } = new();
 
         [BindProperty]
         public Guid categoriaSeleccionada { get; set; }
@@ -35,45 +37,35 @@ namespace Web.Pages.Productos
         // GET
         public async Task<IActionResult> OnGet(Guid id)
         {
+            if (id == null)
+                return NotFound();
             string endpoint = _configuracion.ObtenerMetodo("ApiEndPoints", "ObtenerProducto");
-
             var cliente = new HttpClient();
-            var res = await cliente.GetAsync(string.Format(endpoint, id));
 
-            var json = await res.Content.ReadAsStringAsync();
-
-            producto = JsonSerializer.Deserialize<ProductoResponse>(json,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-            await ObtenerCategoriasAsync();
-
-            if (producto != null)
+            var solicitud = new HttpRequestMessage(HttpMethod.Get, string.Format(endpoint, id));
+            var respuesta = await cliente.SendAsync(solicitud);
+            respuesta.EnsureSuccessStatusCode();
+            if (respuesta.StatusCode == HttpStatusCode.OK)
             {
-                var categoria = categorias
-                    .FirstOrDefault(c => c.Text.Contains(producto.Categoria ?? "", StringComparison.OrdinalIgnoreCase));
+                await ObtenerCategoriasAsync();
+                var resultado = await respuesta.Content.ReadAsStringAsync();
+                var opciones = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                producto = JsonSerializer.Deserialize<ProductoResponse>(resultado, opciones);
 
-                if (categoria != null)
+                if (producto != null)
                 {
-                    categoriaSeleccionada = Guid.Parse(categoria.Value);
-
-                    var lista = await ObtenerSubCategoriasAsync(categoriaSeleccionada);
-
-                    subcategorias = lista.Select(s => new SelectListItem
-                    {
-                        Value = s.Id.ToString(),
-                        Text = s.Nombre
-                    }).ToList();
-
-                    var sub = subcategorias
-    .FirstOrDefault(s => s.Text.Contains(producto.SubCategoria ?? "", StringComparison.OrdinalIgnoreCase));
-
-                    if (sub != null)
-                    {
-                        subCategoriaSeleccionada = Guid.Parse(sub.Value);
-                    }
+                    categoriaSeleccionada = Guid.Parse(categorias.Where(m => m.Text == producto.Categoria).FirstOrDefault().Value);
+                    subCategorias = (await ObtenerSubCategoriasAsync(categoriaSeleccionada)).Select(a =>
+                        new SelectListItem
+                        {
+                            Value = a.Id.ToString(),
+                            Text = a.Nombre.ToString(),
+                            Selected = a.Nombre == producto.SubCategoria
+                        }).ToList();
+                    subCategoriaSeleccionada = Guid.Parse(subCategorias.Where(m => m.Text == producto.SubCategoria).FirstOrDefault().Value);
                 }
-            }
 
+            }
             return Page();
         }
 
@@ -86,15 +78,27 @@ namespace Web.Pages.Productos
             if (!ModelState.IsValid)
                 return Page();
 
+            // 🔥 OBTENER VALOR REAL DEL FORM
+            var subCategoriaForm = Request.Form["subCategoriaSeleccionada"];
+
+            if (string.IsNullOrEmpty(subCategoriaForm))
+            {
+                ModelState.AddModelError("", "Seleccione una subcategoría");
+                await ObtenerCategoriasAsync();
+                return Page();
+            }
+
+            Guid subCategoriaId = Guid.Parse(subCategoriaForm);
+
             string endpoint = _configuracion.ObtenerMetodo("ApiEndPoints", "EditarProducto");
 
             var cliente = new HttpClient();
 
-            var response = await cliente.PutAsJsonAsync(
+            var respuesta = await cliente.PutAsJsonAsync(
                 string.Format(endpoint, producto.Id),
                 new ProductoRequest
                 {
-                    IdSubCategoria = subCategoriaSeleccionada, // 🔥 IGUAL QUE VEHICULO
+                    IdSubCategoria = subCategoriaId, //
                     Nombre = producto.Nombre,
                     Descripcion = producto.Descripcion,
                     Precio = producto.Precio,
@@ -102,52 +106,57 @@ namespace Web.Pages.Productos
                     CodigoBarras = producto.CodigoBarras
                 });
 
-            response.EnsureSuccessStatusCode();
-            Console.WriteLine(producto.Id);
-            Console.WriteLine(subCategoriaSeleccionada);
-            Console.WriteLine(producto.Nombre);
+            respuesta.EnsureSuccessStatusCode();
 
             return RedirectToPage("./Index");
         }
+
 
         // categorias
         private async Task ObtenerCategoriasAsync()
         {
             string endpoint = _configuracion.ObtenerMetodo("ApiEndPoints", "ObtenerCategorias");
-
             var cliente = new HttpClient();
-            var res = await cliente.GetAsync(endpoint);
+            var solicitud = new HttpRequestMessage(HttpMethod.Get, endpoint);
 
-            var json = await res.Content.ReadAsStringAsync();
-
-            var lista = JsonSerializer.Deserialize<List<Categoria>>(json,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-            categorias = lista.Select(c => new SelectListItem
+            var respuesta = await cliente.SendAsync(solicitud);
+            respuesta.EnsureSuccessStatusCode();
+            if (respuesta.StatusCode == HttpStatusCode.OK)
             {
-                Value = c.Id.ToString(),
-                Text = c.Nombre
-            }).ToList();
+                var resultado = await respuesta.Content.ReadAsStringAsync();
+                var opciones = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                var resultadoDeserializado = JsonSerializer.Deserialize<List<Categoria>>(resultado, opciones);
+                categorias = resultadoDeserializado.Select(a =>
+                                  new SelectListItem
+                                  {
+                                      Value = a.Id.ToString(),
+                                      Text = a.Nombre.ToString()
+                                  }).ToList();
+            }
         }
 
         //  subcategorias
         public async Task<JsonResult> OnGetObtenerSubCategorias(Guid idCategoria)
         {
-            return new JsonResult(await ObtenerSubCategoriasAsync(idCategoria));
+            var subCategorias = await ObtenerSubCategoriasAsync(idCategoria);
+            return new JsonResult(subCategorias);
         }
 
         private async Task<List<SubCategoria>> ObtenerSubCategoriasAsync(Guid idCategoria)
         {
             string endpoint = _configuracion.ObtenerMetodo("ApiEndPoints", "ObtenerSubCategorias");
-
             var cliente = new HttpClient();
+            var solicitud = new HttpRequestMessage(HttpMethod.Get, string.Format(endpoint, idCategoria));
 
-            var res = await cliente.GetAsync(string.Format(endpoint, idCategoria));
-
-            var json = await res.Content.ReadAsStringAsync();
-
-            return JsonSerializer.Deserialize<List<SubCategoria>>(json,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            var respuesta = await cliente.SendAsync(solicitud);
+            respuesta.EnsureSuccessStatusCode();
+            if (respuesta.StatusCode == HttpStatusCode.OK)
+            {
+                var resultado = await respuesta.Content.ReadAsStringAsync();
+                var opciones = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                return JsonSerializer.Deserialize<List<SubCategoria>>(resultado, opciones);
+            }
+            return new List<SubCategoria>();
         }
     }
-}
+    }

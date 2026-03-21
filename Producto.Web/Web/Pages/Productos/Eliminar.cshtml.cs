@@ -19,7 +19,7 @@ namespace Web.Pages.Productos
             _configuracion = configuracion;
         }
 
-        // 🔹 GET
+        // GET
         public async Task<IActionResult> OnGet(Guid? id)
         {
             if (id == null)
@@ -44,7 +44,7 @@ namespace Web.Pages.Productos
             return Page();
         }
 
-        // 🔹 POST (DELETE)
+        // POST (DELETE)
         public async Task<IActionResult> OnPost()
         {
             if (producto.Id == Guid.Empty)
